@@ -1,14 +1,13 @@
 package com.example.dvdexample.film;
 
-import com.example.dvdexample.model.Film;
-import com.example.dvdexample.model.Inventory;
-import com.example.dvdexample.model.Payment;
-import com.example.dvdexample.model.Rental;
+import com.example.dvdexample.model.*;
 import com.example.dvdexample.repo.FilmRepo;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.persistence.EntityManager;
+import javax.persistence.TypedQuery;
 import java.math.BigDecimal;
 import java.util.*;
 
@@ -16,6 +15,7 @@ import java.util.*;
 @Service
 public class FilmServiceImpl implements FilmService {
     private FilmRepo filmRepo;
+    private EntityManager entityManager;
 
     @Override
     @Transactional
@@ -40,5 +40,18 @@ public class FilmServiceImpl implements FilmService {
             }
         }
         return result;
+    }
+
+    @Override
+    public List<Profit> calculateProfits() {
+        TypedQuery<Profit> query = entityManager.createQuery("" +
+                "SELECT new com.example.dvdexample.model.Profit(f.title, p.paymentDate, SUM(p.amount)) " +
+                "FROM Film f " +
+                "   JOIN f.inventories i " +
+                "   JOIN i.rentals r " +
+                "   JOIN r.payments p " +
+                "GROUP BY f, p.paymentDate", Profit.class);
+
+        return query.getResultList();
     }
 }
